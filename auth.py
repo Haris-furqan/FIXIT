@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import User
+from models import User,UserRole,Worker
 from schemas import UserRegister
 from firebase import verify_firebase_token
 
@@ -30,6 +30,7 @@ def register(user_data: UserRegister, authorization: str = Header(...), db: Sess
     if existing_user:
         return {"message": "User already exists", "user_id": existing_user.user_id}
     
+
     # Step 4 - create new user
     new_user = User(
         first_name=user_data.first_name,
@@ -39,9 +40,22 @@ def register(user_data: UserRegister, authorization: str = Header(...), db: Sess
         firebase_uid=firebase_uid,
         phone_number=phone_number
     )
+    
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    if user_data.role == UserRole.worker:
+        if not user_data.profession:
+            raise HTTPException(status_code=400, detail="Profession is required for workers")
+        new_worker = Worker(
+            user_id = new_user.user_id,
+            profession = user_data.profession
+        )
+    
+        db.add(new_worker)
+        db.commit()
+        db.refresh(new_worker)
     
     return {"message": "User registered successfully", "user_id": new_user.user_id}
 
