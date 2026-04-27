@@ -1,11 +1,11 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
+from auth import router as auth_router
 
 from database import engine, SessionLocal
 
 import models
 
-models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Service Marketplace API")
 
@@ -16,6 +16,7 @@ def get_db():
     finally:
         db.close()
 
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 
 @app.get("/")
 def root():
