@@ -2,12 +2,19 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
 from database import engine, SessionLocal
-
 import models
 
+from routers import jobs, workers, bids, websocket
+
+# Create all database tables on startup
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Service Marketplace API")
+
+
+# ─────────────────────────────────────────
+#  DB DEPENDENCY
+# ─────────────────────────────────────────
 
 def get_db():
     db = SessionLocal()
@@ -17,10 +24,25 @@ def get_db():
         db.close()
 
 
-@app.get("/")
-def root():
-    return {"message": "FastAPI server is up and running!"}
+# ─────────────────────────────────────────
+#  ROUTERS
+# ─────────────────────────────────────────
 
-@app.get("/health")
+app.include_router(jobs.router)
+app.include_router(workers.router)
+app.include_router(bids.router)
+app.include_router(websocket.router)   # WebSocket endpoints — Week 5-6
+
+
+# ─────────────────────────────────────────
+#  SYSTEM ENDPOINTS
+# ─────────────────────────────────────────
+
+@app.get("/", tags=["System"])
+def root():
+    return {"message": "Service Marketplace API is running"}
+
+
+@app.get("/health", tags=["System"])
 def health_check(db: Session = Depends(get_db)):
-    return {"status": "success", "message": "Database connected successfully!"}
+    return {"status": "success", "message": "Database connected successfully"}

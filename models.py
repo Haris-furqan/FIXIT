@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, DECIMAL, TIMESTAMP, ForeignKey, Enum, CheckConstraint, text
+from sqlalchemy import Column, Integer, String, DECIMAL, TIMESTAMP, ForeignKey, Enum, CheckConstraint, Boolean, text
 from database import Base
 
 class UserRole(str, enum.Enum):
@@ -27,7 +27,6 @@ class InvoiceStatus(str, enum.Enum):
     disputed = 'disputed'
 
 
-
 class User(Base):
     __tablename__ = "users"
 
@@ -44,9 +43,9 @@ class Worker(Base):
     __tablename__ = "workers"
 
     worker_id = Column(Integer, primary_key=True, index=True)
-    # Note the ondelete="CASCADE" to match Person A's constraint exactly
     user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     profession = Column(String(255), nullable=False)
+    is_available = Column(Boolean, nullable=False, default=True)  # Added Week 3-4
 
 
 class Job(Base):
