@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+<<<<<<< HEAD
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
@@ -42,3 +43,13 @@ class WorkerResponse(WorkerBase):
 
 class AvailabilityUpdate(BaseModel):  # Added Week 3-4
     is_available: bool
+=======
+from models import UserRole
+from typing import Optional
+class UserRegister(BaseModel):
+    first_name: str
+    last_name: str
+    cnic: str
+    role: UserRole
+    profession: Optional[str] = None
+>>>>>>> b562721380bec5e60263a4abfd84ca0d59eae70c
