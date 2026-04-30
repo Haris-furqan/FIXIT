@@ -8,9 +8,10 @@ import models
 # Routers (Weeks 3-4 Only)
 from auth import router as auth_router
 from routers import jobs, workers
+from routers.bids import router as bids_router
+
 
 # Create all database tables on startup
-models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Service Marketplace API")
 
@@ -30,6 +31,7 @@ def get_db():
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(jobs.router)
 app.include_router(workers.router)
+app.include_router(bids_router, prefix="", tags=["Bids"])
 
 # ─────────────────────────────────────────
 #  SYSTEM ENDPOINTS

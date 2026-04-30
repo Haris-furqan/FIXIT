@@ -14,7 +14,7 @@ class JobBase(BaseModel):
     y_coords: Decimal
 
 class JobCreate(JobBase):
-    user_id: int
+    pass
 
 class JobResponse(JobBase):
     job_id: int
@@ -31,7 +31,7 @@ class WorkerBase(BaseModel):
     profession: str
 
 class WorkerCreate(WorkerBase):
-    user_id: int
+    pass
 
 class WorkerResponse(WorkerBase):
     worker_id: int
@@ -50,3 +50,6 @@ class UserRegister(BaseModel):
     cnic: str
     role: UserRole
     profession: Optional[str] = None
+
+class BidCreate(BaseModel):
+    bid_amount: Decimal
