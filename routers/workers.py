@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from typing import List
 
 import models, schemas
 from database import SessionLocal
 from models import JobStatus
+from firebase import verify_firebase_token
 
 router = APIRouter(prefix="/workers", tags=["Workers"])
 
@@ -18,12 +19,17 @@ def get_db():
 
 
 @router.post("/profile", response_model=schemas.WorkerResponse)
-def create_worker_profile(profile: schemas.WorkerCreate, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.user_id == profile.user_id).first()
+def create_worker_profile(profile: schemas.WorkerCreate, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    decoded_token = verify_firebase_token(token)
+    firebase_uid = decoded_token["uid"]
+    user = db.query(models.User).filter(models.User.firebase_uid == firebase_uid).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    new_worker = models.Worker(**profile.model_dump())
+    new_worker = models.Worker(
+        user_id=user.user_id,
+        profession=profile.profession
+    )
     db.add(new_worker)
     db.commit()
     db.refresh(new_worker)
@@ -31,11 +37,16 @@ def create_worker_profile(profile: schemas.WorkerCreate, db: Session = Depends(g
 
 
 @router.patch("/{worker_id}/availability", response_model=schemas.WorkerResponse)
-def update_availability(worker_id: int, body: schemas.AvailabilityUpdate, db: Session = Depends(get_db)):
+def update_availability(worker_id: int, body: schemas.AvailabilityUpdate, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    decoded_token = verify_firebase_token(token)
+    firebase_uid = decoded_token["uid"]
+    user = db.query(models.User).filter(models.User.firebase_uid == firebase_uid).first()
     worker = db.query(models.Worker).filter(models.Worker.worker_id == worker_id).first()
     if not worker:
         raise HTTPException(status_code=404, detail="Worker not found")
-
+    if worker.user_id != user.user_id:
+        raise HTTPException(status_code=403, detail="You can only update your own availability")
     worker.is_available = body.is_available
     db.commit()
     db.refresh(worker)
@@ -44,7 +55,5 @@ def update_availability(worker_id: int, body: schemas.AvailabilityUpdate, db: Se
 
 @router.get("/nearby-jobs", response_model=List[schemas.JobResponse])
 def get_nearby_jobs(db: Session = Depends(get_db)):
-    # Placeholder: returns all active jobs.
-    # Will be updated in Weeks 7-8 once Person A adds PostGIS + GPS columns.
     active_jobs = db.query(models.Job).filter(models.Job.status == JobStatus.active).all()
     return active_jobs
